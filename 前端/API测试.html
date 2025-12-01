@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API连接测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .success {
+            color: #28a745;
+        }
+        
+        .error {
+            color: #dc3545;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .status.ok {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 API连接测试</h1>
+        <p style="margin-bottom: 20px; color: #666;">测试前端与后端API的连接状态</p>
+        
+        <div class="test-section">
+            <h2>1. 基础接口测试</h2>
+            <button onclick="testHealth()">健康检查</button>
+            <button onclick="testIndex()">系统信息</button>
+            <div id="basic-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. 元器件类型接口</h2>
+            <button onclick="testGetComponentTypes()">获取元器件类型列表</button>
+            <button onclick="testGetStock()">查询库存</button>
+            <div id="component-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. 入库/出库接口</h2>
+            <button onclick="testGetStockInRecords()">获取入库记录</button>
+            <button onclick="testGetStockOutRecords()">获取出库记录</button>
+            <button onclick="testGetStockOutHistory()">获取取用历史</button>
+            <div id="stock-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. 统计接口</h2>
+            <button onclick="testGetInventory()">库存统计</button>
+            <button onclick="testGetStockByModel()">按型号查询</button>
+            <button onclick="testGetLowStockAlert()">库存预警</button>
+            <div id="statistics-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>5. 供应商接口</h2>
+            <button onclick="testGetSuppliers()">获取供应商列表</button>
+            <div id="supplier-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>6. 全部测试</h2>
+            <button onclick="testAll()" style="background: #28a745;">运行所有测试</button>
+            <div id="all-result" class="result"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+        
+        async function testAPI(url, resultId, testName) {
+            const resultDiv = document.getElementById(resultId);
+            resultDiv.innerHTML = `<span style="color: #999;">测试中...</span>`;
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(url);
+                const endTime = Date.now();
+                const data = await response.json();
+                
+                const status = response.ok ? 'ok' : 'fail';
+                const statusText = response.ok ? '✅ 成功' : '❌ 失败';
+                const time = endTime - startTime;
+                
+                resultDiv.innerHTML = `
+                    <div><strong>${testName}</strong> <span class="status ${status}">${statusText}</span> (${time}ms)</div>
+                    <div style="margin-top: 5px;"><strong>URL:</strong> ${url}</div>
+                    <div style="margin-top: 5px;"><strong>响应:</strong></div>
+                    <pre style="margin-top: 5px; background: #f8f9fa; padding: 10px; border-radius: 3px;">${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error"><strong>${testName}</strong> <span class="status fail">❌ 失败</span></div>
+                    <div style="margin-top: 5px;"><strong>错误:</strong> ${error.message}</div>
+                    <div style="margin-top: 5px; color: #dc3545;">请确保后端服务已启动（http://localhost:8080）</div>
+                `;
+            }
+        }
+        
+        // 基础接口
+        function testHealth() {
+            testAPI(`${API_BASE_URL}/../health`, 'basic-result', '健康检查');
+        }
+        
+        function testIndex() {
+            testAPI(`${API_BASE_URL}/..`, 'basic-result', '系统信息');
+        }
+        
+        // 元器件接口
+        function testGetComponentTypes() {
+            testAPI(`${API_BASE_URL}/component/types?page=1&size=10`, 'component-result', '获取元器件类型列表');
+        }
+        
+        function testGetStock() {
+            testAPI(`${API_BASE_URL}/component/stock/1`, 'component-result', '查询库存');
+        }
+
+        // 入库/出库接口
+        function testGetStockInRecords() {
+            testAPI(`${API_BASE_URL}/component/stock-in/records?page=1&size=10`, 'stock-result', '获取入库记录');
+        }
+
+        function testGetStockOutRecords() {
+            testAPI(`${API_BASE_URL}/component/stock-out/records?page=1&size=10`, 'stock-result', '获取出库记录');
+        }
+
+        function testGetStockOutHistory() {
+            testAPI(`${API_BASE_URL}/component/stock-out/history/1`, 'stock-result', '获取取用历史');
+        }
+
+        // 统计接口
+        function testGetInventory() {
+            testAPI(`${API_BASE_URL}/statistics/inventory`, 'statistics-result', '库存统计');
+        }
+
+        function testGetStockByModel() {
+            testAPI(`${API_BASE_URL}/statistics/stock-by-model?model=10KΩ`, 'statistics-result', '按型号查询');
+        }
+
+        function testGetLowStockAlert() {
+            testAPI(`${API_BASE_URL}/statistics/low-stock-alert?threshold=10`, 'statistics-result', '库存预警');
+        }
+
+        // 供应商接口
+        function testGetSuppliers() {
+            testAPI(`${API_BASE_URL}/supplier/list?page=1&size=10`, 'supplier-result', '获取供应商列表');
+        }
+
+        // 全部测试
+        async function testAll() {
+            const resultDiv = document.getElementById('all-result');
+            resultDiv.innerHTML = '<div style="color: #999;">正在运行所有测试...</div>';
+
+            const tests = [
+                { name: '健康检查', url: `${API_BASE_URL}/../health` },
+                { name: '系统信息', url: `${API_BASE_URL}/..` },
+                { name: '元器件类型列表', url: `${API_BASE_URL}/component/types?page=1&size=10` },
+                { name: '查询库存', url: `${API_BASE_URL}/component/stock/1` },
+                { name: '入库记录', url: `${API_BASE_URL}/component/stock-in/records?page=1&size=10` },
+                { name: '出库记录', url: `${API_BASE_URL}/component/stock-out/records?page=1&size=10` },
+                { name: '取用历史', url: `${API_BASE_URL}/component/stock-out/history/1` },
+                { name: '库存统计', url: `${API_BASE_URL}/statistics/inventory` },
+                { name: '按型号查询', url: `${API_BASE_URL}/statistics/stock-by-model?model=10KΩ` },
+                { name: '库存预警', url: `${API_BASE_URL}/statistics/low-stock-alert?threshold=10` },
+                { name: '供应商列表', url: `${API_BASE_URL}/supplier/list?page=1&size=10` }
+            ];
+
+            let results = [];
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const test of tests) {
+                try {
+                    const startTime = Date.now();
+                    const response = await fetch(test.url);
+                    const endTime = Date.now();
+                    const time = endTime - startTime;
+
+                    if (response.ok) {
+                        successCount++;
+                        results.push(`<div style="color: #28a745;">✅ ${test.name} - 成功 (${time}ms)</div>`);
+                    } else {
+                        failCount++;
+                        results.push(`<div style="color: #dc3545;">❌ ${test.name} - 失败 (HTTP ${response.status})</div>`);
+                    }
+                } catch (error) {
+                    failCount++;
+                    results.push(`<div style="color: #dc3545;">❌ ${test.name} - 错误: ${error.message}</div>`);
+                }
+            }
+
+            const summary = `
+                <div style="margin-bottom: 15px; padding: 10px; background: ${successCount === tests.length ? '#d4edda' : '#fff3cd'}; border-radius: 5px;">
+                    <strong>测试完成！</strong><br>
+                    总计: ${tests.length} 个测试<br>
+                    成功: <span style="color: #28a745;">${successCount}</span><br>
+                    失败: <span style="color: #dc3545;">${failCount}</span>
+                </div>
+            `;
+
+            resultDiv.innerHTML = summary + results.join('');
+        }
+    </script>
+</body>
+</html>
+

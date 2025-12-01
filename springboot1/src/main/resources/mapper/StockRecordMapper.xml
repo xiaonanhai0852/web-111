@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gok.demos.infrastructure.persistence.mapper.StockRecordMapper">
+
+    <resultMap id="StockInRecordResultMap" type="com.gok.demos.domain.entity.StockInRecord">
+        <id property="id" column="id"/>
+        <result property="componentTypeId" column="component_type_id"/>
+        <result property="quantity" column="quantity"/>
+        <result property="purchaseDate" column="purchase_date"/>
+        <result property="purchaserId" column="purchaser_id"/>
+        <result property="purchaserName" column="purchaser_name"/>
+        <result property="batchNumber" column="batch_number"/>
+        <result property="remarks" column="remarks"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <resultMap id="StockOutRecordResultMap" type="com.gok.demos.domain.entity.StockOutRecord">
+        <id property="id" column="id"/>
+        <result property="componentTypeId" column="component_type_id"/>
+        <result property="quantity" column="quantity"/>
+        <result property="userId" column="user_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="purpose" column="purpose"/>
+        <result property="projectName" column="project_name"/>
+        <result property="remarks" column="remarks"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <insert id="insertStockIn" parameterType="com.gok.demos.domain.entity.StockInRecord"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO stock_in_records (
+            component_type_id, quantity, purchase_date, purchaser_id,
+            purchaser_name, batch_number, remarks, created_at
+        ) VALUES (
+            #{componentTypeId}, #{quantity}, #{purchaseDate}, #{purchaserId},
+            #{purchaserName}, #{batchNumber}, #{remarks}, #{createdAt}
+        )
+    </insert>
+
+    <insert id="insertStockOut" parameterType="com.gok.demos.domain.entity.StockOutRecord"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO stock_out_records (
+            component_type_id, quantity, user_id, user_name,
+            purpose, project_name, remarks, created_at
+        ) VALUES (
+            #{componentTypeId}, #{quantity}, #{userId}, #{userName},
+            #{purpose}, #{projectName}, #{remarks}, #{createdAt}
+        )
+    </insert>
+
+    <select id="findStockInByComponentTypeId" resultMap="StockInRecordResultMap">
+        SELECT * FROM stock_in_records 
+        WHERE component_type_id = #{componentTypeId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findStockOutByComponentTypeId" resultMap="StockOutRecordResultMap">
+        SELECT * FROM stock_out_records 
+        WHERE component_type_id = #{componentTypeId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="calculateCurrentStock" resultType="int">
+        SELECT 
+            COALESCE(
+                (SELECT SUM(quantity) FROM stock_in_records WHERE component_type_id = #{componentTypeId}), 0
+            ) - 
+            COALESCE(
+                (SELECT SUM(quantity) FROM stock_out_records WHERE component_type_id = #{componentTypeId}), 0
+            ) AS current_stock
+    </select>
+
+    <select id="findStockOutByUserId" resultMap="StockOutRecordResultMap">
+        SELECT * FROM stock_out_records
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findAllStockIn" resultMap="StockInRecordResultMap">
+        SELECT * FROM stock_in_records
+        ORDER BY created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countStockIn" resultType="int">
+        SELECT COUNT(*) FROM stock_in_records
+    </select>
+
+    <select id="findAllStockOut" resultMap="StockOutRecordResultMap">
+        SELECT * FROM stock_out_records
+        ORDER BY created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countStockOut" resultType="int">
+        SELECT COUNT(*) FROM stock_out_records
+    </select>
+
+</mapper>
+

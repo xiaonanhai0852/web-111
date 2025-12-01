@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>元器件管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .nav-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .nav-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .content-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none !important;
+        }
+
+        .content-section.active {
+            display: block !important;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* 管理员专用功能样式 */
+        .admin-only {
+            display: none;
+        }
+
+        body.admin .admin-only {
+            display: inline-block;
+        }
+
+        .user-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .user-badge.admin {
+            background: #667eea;
+            color: white;
+        }
+
+        .user-badge.user {
+            background: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h1>🔧 元器件管理系统</h1>
+                    <p class="subtitle">基于DDD架构的智能元器件全生命周期管理平台</p>
+                </div>
+                <div style="text-align: right;">
+                    <div id="user-info" style="margin-bottom: 10px;">
+                        <span style="color: #667eea; font-weight: bold;" id="username-display"></span>
+                        <span style="color: #999; margin-left: 10px;" id="role-display"></span>
+                    </div>
+                    <button onclick="logout()" style="padding: 8px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;">退出登录</button>
+                </div>
+            </div>
+
+            <div class="nav-tabs" id="nav-tabs">
+                <button class="nav-tab active" onclick="showTab('stock-in', event)">入库管理</button>
+                <button class="nav-tab" onclick="showTab('stock-out', event)">取用管理</button>
+                <button class="nav-tab" onclick="showTab('statistics', event)">库存统计</button>
+                <button class="nav-tab" onclick="showTab('stock-in-records', event)">入库记录</button>
+                <button class="nav-tab" onclick="showTab('stock-out-records', event)">出库记录</button>
+                <button class="nav-tab admin-only" onclick="showTab('component-type', event)">元器件类型管理</button>
+                <button class="nav-tab admin-only" onclick="showTab('supplier', event)">供应商管理</button>
+                <button class="nav-tab admin-only" onclick="showTab('user-management', event)">用户管理</button>
+            </div>
+        </header>
+
+        <!-- 入库管理 -->
+        <div id="stock-in" class="content-section active">
+            <h2>📦 入库管理</h2>
+            <div class="alert" id="stock-in-alert"></div>
+
+            <form id="stock-in-form">
+                <div class="form-group">
+                    <label>元器件类型：</label>
+                    <select id="component-type-in" required>
+                        <option value="">请选择元器件类型</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>入库数量：</label>
+                    <input type="number" id="quantity-in" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>采购日期：</label>
+                    <input type="datetime-local" id="purchase-date" required>
+                </div>
+
+                <div class="form-group">
+                    <label>采购人姓名：</label>
+                    <input type="text" id="purchaser-name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>批次号：</label>
+                    <input type="text" id="batch-number">
+                </div>
+
+                <div class="form-group">
+                    <label>备注：</label>
+                    <textarea id="remarks-in" rows="3"></textarea>
+                </div>
+
+                <button type="submit">提交入库</button>
+            </form>
+        </div>
+
+        <!-- 取用管理 -->
+        <div id="stock-out" class="content-section">
+            <h2>📤 取用管理</h2>
+            <div class="alert" id="stock-out-alert"></div>
+
+            <form id="stock-out-form">
+                <div class="form-group">
+                    <label>元器件类型：</label>
+                    <select id="component-type-out" required onchange="updateStock()">
+                        <option value="">请选择元器件类型</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>当前库存：<span id="current-stock" style="color: #667eea; font-size: 18px;">-</span></label>
+                </div>
+
+                <div class="form-group">
+                    <label>取用数量：</label>
+                    <input type="number" id="quantity-out" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>取用人姓名：</label>
+                    <input type="text" id="user-name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>取用目的：</label>
+                    <input type="text" id="purpose">
+                </div>
+
+                <div class="form-group">
+                    <label>项目名称：</label>
+                    <input type="text" id="project-name">
+                </div>
+
+                <div class="form-group">
+                    <label>备注：</label>
+                    <textarea id="remarks-out" rows="3"></textarea>
+                </div>
+
+                <button type="submit">提交取用</button>
+            </form>
+        </div>
+
+        <!-- 库存统计 -->
+        <div id="statistics" class="content-section">
+            <h2>📊 库存统计</h2>
+            <button onclick="loadStatistics()">刷新统计</button>
+
+            <div class="table-container">
+                <table id="statistics-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>元器件名称</th>
+                            <th>型号</th>
+                            <th>当前库存</th>
+                            <th>单价</th>
+                            <th>库存价值</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statistics-body">
+                        <tr><td colspan="6" style="text-align: center;">暂无数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 入库记录 -->
+        <div id="stock-in-records" class="content-section">
+            <h2>📋 入库记录</h2>
+            <button onclick="loadStockInRecords()" style="margin-bottom: 10px;">刷新记录</button>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>元器件类型ID</th>
+                            <th>数量</th>
+                            <th>采购日期</th>
+                            <th>采购人</th>
+                            <th>批次号</th>
+                            <th>备注</th>
+                            <th>创建时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-in-records-body">
+                        <tr><td colspan="8" style="text-align: center;">暂无数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 出库记录 -->
+        <div id="stock-out-records" class="content-section">
+            <h2>📤 出库记录</h2>
+            <button onclick="loadStockOutRecords()" style="margin-bottom: 10px;">刷新记录</button>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>元器件类型ID</th>
+                            <th>数量</th>
+                            <th>取用人</th>
+                            <th>取用目的</th>
+                            <th>项目名称</th>
+                            <th>备注</th>
+                            <th>创建时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-out-records-body">
+                        <tr><td colspan="8" style="text-align: center;">暂无数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 元器件类型管理（管理员） -->
+        <div id="component-type" class="content-section admin-only">
+            <h2>⚙️ 元器件类型管理</h2>
+            <div class="alert" id="component-type-alert"></div>
+
+            <h3>添加元器件类型</h3>
+            <form id="component-type-form">
+                <div class="form-group">
+                    <label>元器件名称：<span style="color: red;">*</span></label>
+                    <input type="text" id="component-name" required placeholder="如：电阻">
+                </div>
+
+                <div class="form-group">
+                    <label>型号（唯一）：<span style="color: red;">*</span></label>
+                    <input type="text" id="component-model" required placeholder="如：10KΩ">
+                </div>
+
+                <div class="form-group">
+                    <label>供应商：<span style="color: red;">*</span></label>
+                    <select id="supplier-id-select" required>
+                        <option value="">请选择供应商</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>单价：<span style="color: red;">*</span></label>
+                    <input type="number" id="unit-price" step="0.01" required placeholder="0.00">
+                </div>
+
+                <div class="form-group">
+                    <label>图片URL：</label>
+                    <input type="text" id="component-image-url" placeholder="元器件图片链接">
+                </div>
+
+                <h4 style="margin-top: 20px; color: #667eea;">规格参数（选填）</h4>
+
+                <div class="form-group">
+                    <label>电压参数：</label>
+                    <input type="text" id="component-voltage" placeholder="如：5V">
+                </div>
+
+                <div class="form-group">
+                    <label>功率参数：</label>
+                    <input type="text" id="component-power" placeholder="如：0.25W">
+                </div>
+
+                <div class="form-group">
+                    <label>容差：</label>
+                    <input type="text" id="component-tolerance" placeholder="如：±5%">
+                </div>
+
+                <div class="form-group">
+                    <label>温度范围：</label>
+                    <input type="text" id="component-temperature" placeholder="如：-40℃~85℃">
+                </div>
+
+                <div class="form-group">
+                    <label>封装类型：</label>
+                    <input type="text" id="component-package" placeholder="如：0805">
+                </div>
+
+                <div class="form-group">
+                    <label>其他参数：</label>
+                    <textarea id="component-other-params" rows="3" placeholder="其他规格参数（JSON格式）"></textarea>
+                </div>
+
+                <button type="submit">添加元器件类型</button>
+            </form>
+
+            <h3 style="margin-top: 30px;">元器件类型列表</h3>
+            <button onclick="loadComponentTypeList()" style="margin-bottom: 10px;">刷新列表</button>
+            <div class="table-container" style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>名称</th>
+                            <th>型号</th>
+                            <th>供应商ID</th>
+                            <th>单价</th>
+                            <th>图片</th>
+                            <th>电压</th>
+                            <th>功率</th>
+                            <th>容差</th>
+                            <th>温度</th>
+                            <th>封装</th>
+                            <th>其他参数</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="component-type-list">
+                        <tr><td colspan="13" style="text-align: center;">暂无数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 供应商管理（管理员） -->
+        <div id="supplier" class="content-section admin-only">
+            <h2>🏢 供应商管理</h2>
+            <div class="alert" id="supplier-alert"></div>
+
+            <h3>添加供应商</h3>
+            <form id="supplier-form">
+                <div class="form-group">
+                    <label>供应商名称：<span style="color: red;">*</span></label>
+                    <input type="text" id="supplier-name" required placeholder="如：深圳市华强电子有限公司">
+                </div>
+
+                <div class="form-group">
+                    <label>联系电话：<span style="color: red;">*</span></label>
+                    <input type="text" id="supplier-phone" required placeholder="如：0755-12345678">
+                </div>
+
+                <div class="form-group">
+                    <label>邮箱：</label>
+                    <input type="email" id="supplier-email" placeholder="如：supplier@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label>联系人：</label>
+                    <input type="text" id="supplier-contact" placeholder="如：张经理">
+                </div>
+
+                <div class="form-group">
+                    <label>省份：</label>
+                    <input type="text" id="supplier-province" placeholder="如：广东省">
+                </div>
+
+                <div class="form-group">
+                    <label>城市：</label>
+                    <input type="text" id="supplier-city" placeholder="如：深圳市">
+                </div>
+
+                <div class="form-group">
+                    <label>区县：</label>
+                    <input type="text" id="supplier-district" placeholder="如：福田区">
+                </div>
+
+                <div class="form-group">
+                    <label>街道地址：</label>
+                    <input type="text" id="supplier-street" placeholder="如：华强北路1号">
+                </div>
+
+                <div class="form-group">
+                    <label>邮编：</label>
+                    <input type="text" id="supplier-postal-code" placeholder="如：518000">
+                </div>
+
+                <button type="submit">添加供应商</button>
+            </form>
+
+            <h3 style="margin-top: 30px;">供应商列表</h3>
+            <button onclick="loadSuppliers()">刷新列表</button>
+            <div class="table-container" style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>名称</th>
+                            <th>电话</th>
+                            <th>邮箱</th>
+                            <th>联系人</th>
+                            <th>省份</th>
+                            <th>城市</th>
+                            <th>区县</th>
+                            <th>街道地址</th>
+                            <th>邮编</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supplier-list">
+                        <tr><td colspan="11" style="text-align: center;">暂无数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 用户管理（管理员） -->
+        <div id="user-management" class="content-section admin-only">
+            <h2>👥 用户管理</h2>
+            <div class="alert" id="user-alert"></div>
+
+            <h3>添加用户</h3>
+            <form id="user-form">
+                <div class="form-group">
+                    <label>学号/工号：</label>
+                    <input type="text" id="user-student-id" required>
+                </div>
+
+                <div class="form-group">
+                    <label>真实姓名：</label>
+                    <input type="text" id="user-real-name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>用户名：</label>
+                    <input type="text" id="user-username" required>
+                </div>
+
+                <div class="form-group">
+                    <label>密码：</label>
+                    <input type="password" id="user-password" required minlength="6" placeholder="至少6位">
+                </div>
+
+                <div class="form-group">
+                    <label>邮箱：</label>
+                    <input type="email" id="user-email" required>
+                </div>
+
+                <div class="form-group">
+                    <label>手机号：</label>
+                    <input type="text" id="user-phone" required pattern="[0-9]{11}" placeholder="11位手机号">
+                </div>
+
+                <div class="form-group">
+                    <label>角色：</label>
+                    <select id="user-role" required>
+                        <option value="USER">普通用户</option>
+                        <option value="ADMIN">管理员</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>部门：</label>
+                    <input type="text" id="user-department">
+                </div>
+
+                <button type="submit">添加用户</button>
+            </form>
+
+            <h3 style="margin-top: 30px;">用户列表</h3>
+            <button onclick="loadUsers()" style="margin-bottom: 10px;">刷新列表</button>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>学号/工号</th>
+                            <th>用户名</th>
+                            <th>姓名</th>
+                            <th>邮箱</th>
+                            <th>手机</th>
+                            <th>角色</th>
+                            <th>部门</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-list">
+                        <tr><td colspan="9" style="text-align: center;">暂无数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/component-management.js"></script>
+</body>
+</html>
+

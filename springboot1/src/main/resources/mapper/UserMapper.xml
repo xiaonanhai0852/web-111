@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.gok.demos.infrastructure.persistence.mapper.UserMapper">
+
+    <resultMap id="UserResultMap" type="com.gok.demos.entity.User">
+        <id property="id" column="id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="passwordHash" column="password_hash"/>
+        <result property="realName" column="real_name"/>
+        <result property="avatarUrl" column="avatar_url"/>
+        <result property="role" column="role"/>
+        <result property="status" column="status"/>
+        <result property="department" column="department"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.gok.demos.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (
+            student_id, email, phone, password_hash, real_name,
+            avatar_url, role, status, department,
+            created_at, updated_at
+        ) VALUES (
+            #{studentId}, #{email}, #{phone}, #{passwordHash}, #{realName},
+            #{avatarUrl}, #{role}, #{status}, #{department},
+            #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.gok.demos.entity.User">
+        UPDATE users SET
+            student_id = #{studentId},
+            email = #{email},
+            phone = #{phone},
+            password_hash = #{passwordHash},
+            real_name = #{realName},
+            avatar_url = #{avatarUrl},
+            role = #{role},
+            status = #{status},
+            department = #{department},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultMap="UserResultMap">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+
+    <select id="selectByStudentId" resultMap="UserResultMap">
+        SELECT * FROM users WHERE student_id = #{studentId}
+    </select>
+
+    <select id="selectByEmail" resultMap="UserResultMap">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+
+    <select id="selectByPhone" resultMap="UserResultMap">
+        SELECT * FROM users WHERE phone = #{phone}
+    </select>
+
+    <select id="selectAll" resultMap="UserResultMap">
+        SELECT * FROM users 
+        ORDER BY created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM users
+    </select>
+
+</mapper>
+

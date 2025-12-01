@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gok.demos.infrastructure.persistence.mapper.ComponentTypeMapper">
+
+    <resultMap id="ComponentTypeResultMap" type="com.gok.demos.domain.entity.ComponentType">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="model" column="model"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="unitPrice" column="unit_price"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <association property="specification" javaType="com.gok.demos.domain.valueobject.Specification">
+            <constructor>
+                <arg column="spec_voltage" javaType="String"/>
+                <arg column="spec_power" javaType="String"/>
+                <arg column="spec_tolerance" javaType="String"/>
+                <arg column="spec_temperature" javaType="String"/>
+                <arg column="spec_package_type" javaType="String"/>
+                <arg column="spec_other_params" javaType="String"/>
+            </constructor>
+        </association>
+    </resultMap>
+
+    <select id="findById" resultMap="ComponentTypeResultMap">
+        SELECT * FROM component_types WHERE id = #{id}
+    </select>
+
+    <select id="findByModel" resultMap="ComponentTypeResultMap">
+        SELECT * FROM component_types WHERE model = #{model}
+    </select>
+
+    <select id="findAll" resultMap="ComponentTypeResultMap">
+        SELECT * FROM component_types ORDER BY created_at DESC
+    </select>
+
+    <select id="findByPage" resultMap="ComponentTypeResultMap">
+        SELECT * FROM component_types 
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM component_types
+    </select>
+
+    <insert id="insert" parameterType="com.gok.demos.domain.entity.ComponentType" 
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO component_types (
+            name, model, supplier_id, unit_price, image_url,
+            spec_voltage, spec_power, spec_tolerance, spec_temperature,
+            spec_package_type, spec_other_params, created_at, updated_at
+        ) VALUES (
+            #{name}, #{model}, #{supplierId}, #{unitPrice}, #{imageUrl},
+            #{specification.voltage}, #{specification.power}, #{specification.tolerance},
+            #{specification.temperature}, #{specification.packageType}, #{specification.otherParams},
+            #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.gok.demos.domain.entity.ComponentType">
+        UPDATE component_types SET
+            name = #{name},
+            model = #{model},
+            supplier_id = #{supplierId},
+            unit_price = #{unitPrice},
+            image_url = #{imageUrl},
+            spec_voltage = #{specification.voltage},
+            spec_power = #{specification.power},
+            spec_tolerance = #{specification.tolerance},
+            spec_temperature = #{specification.temperature},
+            spec_package_type = #{specification.packageType},
+            spec_other_params = #{specification.otherParams},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM component_types WHERE id = #{id}
+    </delete>
+
+    <select id="findBySupplierId" resultMap="ComponentTypeResultMap">
+        SELECT * FROM component_types WHERE supplier_id = #{supplierId}
+    </select>
+
+</mapper>
+
